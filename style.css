@@ -1,268 +1,289 @@
-:root{
-    --main-bg-color:#eff5fe;
-    --border-color:#0288d147;
-    --container-width:500px;
+:root {
+  --main-bg-color: #edf5fe;
+  --light-blue: #03a9f4;
+  --border-color: #0288d147;
+  --container-width: 500px;
 }
 
-body ,html{
-     /* Systems default font */
-    font-family: system-ui; 
-    background:var(--main-bg-color) ;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
+body {
+  /* System's Default font ui */
+  font-family: system-ui;
+  background: var(--main-bg-color);
+  height: 98vh;
+  overflow: hidden;
 }
 
-body , .drop-zone, .upload-container{
-    display: flex;
-    flex-direction: column;
-    /* Aligns vertically(along y-axis) center */
-    align-items: center;
+.logo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 150px;
+}
+
+.image-vector {
+  width: 50vw;
+  height: 50vh;
+  background: url(/undraw-upload.svg) no-repeat center;
+  background-size: contain;
+}
+
+body,
+.upload-container,
+.drop-zone {
+  display: flex;
+   /* Aligns vertically(along y-axis) center */
+  align-items: center;
     /* Aligns horizontally(along x-axis) center */
-    justify-content: center;
+  justify-content: center;
+}
+.upload-container,
+.drop-zone {
+  flex-direction: column;
 }
 
-body{
-    flex-direction: row;
-
+.upload-container {
+  background: #ffffff;
+  border-radius: 25px;
+  box-shadow: 0px 20px 20px 0px #00000017;
 }
 
-.upload-container{
-    background:#ffffff;
-    border-radius: 25px;
-    box-shadow:0px 20px 20px #0000002e;
+.drop-zone {
+  width: var(--container-width);
+  min-height: 200px;
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  margin: 30px;
+  transition: 0.2s all ease-in;
 }
 
-.drop-zone{
-    width: var(--container-width);
-    min-height: 200px;
-    border: 2px dashed var(--border-color) ;
-    margin: 30px;
-    border-radius: 10px;
+/* will be added when user drags */
+.drop-zone.dragged {
+  background: var(--main-bg-color);
+  border-color: #0288d1;
 }
 
-.dragged.drop-zone{
-    background:var(--main-bg-color) ;
-    border-color: #2196f3;
-    transition:all .2s ease;
-}
-.icon-container{
-    width: 75px;
-    height: 100px;;
-    position: relative;
-    
+.drop-zone input {
+  display: none;
 }
 
-.icon-container img{
-    width: 75px;
-    /* Places all images one above another */
-    position: absolute; 
-    transform-origin: bottom;
-    /* Transition is applied on transform */
-    transition: transform 25ms ease-in-out;
-
+.icon-container {
+  position: relative;
+  width: 75px;
+  height: 100px;
 }
 
-.icon-container .center{
-    /* Places center image at top */
-    z-index:2;
+.icon-container img {
+  width: 75px;
+  position: absolute;
+  /* Transition is applied on transform */
+  transition: transform 0.25s ease-in-out;
+  transform-origin: bottom;
 }
-.icon-container .right,.icon-container .left{
+
+.icon-container .center {
+  /* Places center image at top */
+  z-index: 10;
+}
+.icon-container .right,
+.icon-container .left {
 /* To make backgrond images greyish in color */
-filter:grayscale(.5);
-scale:(0.9);
+  filter: grayscale(0.5);
+  transform: scale(0.9);
 }
-
 /* Will be called only if dragged class is called through js */
-.dragged .icon-container .right{
+.dragged .center {
+  transform: translateY(-5px);
+}
+.dragged .right {
     /* Translate is used to shift from original position */
-    transform: rotate(10deg) translateX(20px) scale(.9);
+  transform: rotate(10deg) scale(0.9) translateX(20px);
 }
-.dragged .icon-container .left{
-    /* Translate is used to shift from original position */
-    transform: rotate(-10deg) translateX(-20px) scale(.9);
-}
-
-.dragged .icon-container .center{
-    transform:translateY(-5px);
+.dragged .left {
+  transform: rotate(-10deg) scale(0.9) translateX(-20px);
 }
 
-#fileInput{
-    display: none;
-}
-.browseBtn{
-    color: #2196f3;
-    cursor: pointer;
+.title {
+  font-size: large;
 }
 
+#browseBtn {
+  color: #2196f3;
+  cursor: pointer;
+}
 
-.progress-container{
-width: var(--container-width);
-height: 70px;
-border: 2px solid var(--main-bg-color);
-margin-bottom: 25px;
-border-radius: 2px;
-position: relative;
+/* uploading progress styles */
+.progress-container {
+  border: 2px solid var(--main-bg-color);
+  width: var(--container-width);
+  height: 70px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  position: relative;
 /* To hide initially */
-display: none;  
+  display: none;
 }
 
-.progress-container .bg-progress{
-    background: var(--main-bg-color);
-    width: 0%;
-    height: 100%;
-    /* //progress bar starts from left with intial size of bar with increasing width */
-    /* transform: scaleX(.01); */
-    transform-origin: left;
-    transition: width .25s linear;
-    position: absolute;
-
+.progress-container .inner-container {
+  margin: 10px 15px;
+  z-index: 2;
+  position: absolute;
+  width: calc(100% - 30px);
 }
 
-.progress-container .inner-container{
-    position: absolute;
-    z-index: 1;
-    margin: 10px 15px;
-    width: calc(100% -30px);
+.progress-container .percent-container {
+  font-size: 14px;
+  margin: 5px;
+  opacity: 0.7;
 }
 
-.percent-container{
-    font-size: 13px;
-    margin: 5px;
-    opacity: .8;
+.progress-container .bg-progress {
+  position: absolute;
+  background: var(--main-bg-color);
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  transition: transform 250ms linear;
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
-.progress-bar{
-    height: 30px;
-    width: 100%;
-    background: #03a9f4;
-    border-radius: 2px;
-    transform-origin: left;
-    transform: scaleX(0);
-    transition: transform width .25s linear;
+.progress-container .progress-bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: #03a9f4;
+  transition: transform 200ms linear;
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
-.sharing-container{
-    width: var(--container-width);
-    margin-bottom: 20px;
-    display: none;
+/* sharing container style */
+.sharing-container {
+  margin-bottom: 25px;
+  width: var(--container-width);
+  border-radius: 10px;
+  display: none;
 }
 
-p{
-    opacity:.7;
-    text-align: center;
+.sharing-container p {
+  text-align: center;
+}
+
+.sharing-container .expire {
+  font-size: 16px;
+  opacity: 0.7;
+  margin-top: 0;
 }
 
 .sharing-container .input-container {
-    position: relative;
-} 
-
-.sharing-container .input-container input{
-    width: 100%;
-    border: 2px dashed var(--border-color);
-    border-radius: 6px;
-    padding: 10px 15px;
-    box-sizing: border-box;
-    font-size: 20px;
-    background: #f5fcff;
-    color: #0000008c;
-  
+  display: flex;
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
 }
 
-.input-container img{
-    position: absolute;
-    height: 22px;
-    width: 30px;
-    right: 7px;
-    top: 12px;
-    background: #f7fdff;
-    cursor: pointer;
-
+.sharing-container .input-container input {
+  width: 100%;
+  border-radius: 3px;
+  padding: 10px 15px;
+  font-size: 20px;
+  border: 2px dashed var(--border-color);
+  border-radius: 6px;
+  background: #f5fcff;
+  color: #607d8b;
 }
 
-
-.email-container{
-    display: flex;
-    align-items: center;
-    
+.sharing-container img {
+  height: 22px;
+  width: 30px;
+  position: absolute;
+  right: 7px;
+  top: 12px;
+  cursor: pointer;
+  background: #f5fcff;
 }
 
-.email-container form{
-    width: 100%;
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+.email-container form {
+  border: 2px solid var(--border-color);
+  width: 100%;
+  padding: 15px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
-.email-container .field{
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 5px;
-    width: 400px;
+.email-container,
+.send-btn-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-
 .email-container label {
-    font-size: 18px;
-
+  margin: 5px;
+  font-size: 18px;
 }
+
 .email-container input {
-    font-size: 18px;
-    border:none;
-    border-bottom: 2px solid var(--border-color);
-    /* Starts typing from the center */
-    text-align: center;
-}
-.email-container input:focus{
-    outline: none;
-}
-.email-container button{
-    font-size: 18px;
-    padding:8px 40px;
-    margin-top: 15px;
-    background: var(--main-bg-color);
-    border:none;
-    border-radius: 5px;
-    color: #3607d8;
-    cursor:pointer;
-
+  border: none;
+  border-bottom: 2px solid var(--border-color);
+  height: 19px;
+  font-size: 18px;
+  text-align: center;
 }
 
-.toast{
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translate(-50%);
-    padding: 10px 20px;
-    border-radius: 5px;
-    background: #03a9f4;
-    color: #fff;
-    font-size: 18px;
-    transform: translate(-50%,60px);
-    box-shadow: 0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -2px rgba(0,0,0,0.05);
-    transition: transform ease-in-out 0.2s;
+.email-container input:focus {
+  outline: none;
 }
 
-.upload-vector{
-    background: url(./assets/upload.svg) no repeat center;
-    background-size: contain;
-    height: 50vh;
-    width: 50vw;
+.email-container .filed {
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
 }
 
-@media screen and (max-width:900px){
-    :root{
-        --container-width:320px;
-    }
+.send-btn-container button {
+  font-size: 18px;
+  padding: 8px 40px;
+  margin-top: 15px;
+  background: var(--main-bg-color);
+  border: none;
+  border-radius: 5px;
+  color: #607d8b;
+  cursor: pointer;
+}
 
-    .upload-vector{
-        display: none;
-    }
-    .email-container .field{
-        flex-direction: column;
-        width: 300px;
-    }
+.toast {
+  position: absolute;
+  bottom: 10px;
+  right: 50%;
+  transform: translate(50%, 60px);
+  padding: 10px 20px;
+  background: var(--light-blue);
+  color: #fff;
+  border-radius: 5px;
+  font-size: 18px;
+  box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0px 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: transform ease-in-out 0.2s;
+}
+
+.show.toast {
+  transform: translate(50%, 0);
+}
+
+@media screen and (max-width: 900px) {
+  :root {
+    --container-width: 320px;
+  }
+  .image-vector {
+    display: none;
+  }
+  .email-container .filed {
+    flex-direction: column;
+  }
+  .email-container .filed {
+    width: 300px;
+  }
 }
