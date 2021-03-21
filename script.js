@@ -1,195 +1,190 @@
-const dropZone=document.querySelector(".drop-zone");
+const dropZone = document.querySelector(".drop-zone");
+const fileInput = document.querySelector("#fileInput");
+const browseBtn = document.querySelector("#browseBtn");
+
+const bgProgress = document.querySelector(".bg-progress");
+const progressPercent = document.querySelector("#progressPercent");
+const progressContainer = document.querySelector(".progress-container");
+const progressBar = document.querySelector(".progress-bar");
+const status = document.querySelector(".status");
+
+const sharingContainer = document.querySelector(".sharing-container");
+const copyURLBtn = document.querySelector("#copyURLBtn");
+const fileURL = document.querySelector("#fileURL");
+const emailForm = document.querySelector("#emailForm");
+
+const toast = document.querySelector(".toast");
+
+const baseURL = "https://innshare.herokuapp.com";
+const uploadURL = `${baseURL}/api/files`;
+const emailURL = `${baseURL}/api/files/send`;
+
+const maxAllowedSize = 100 * 1024 * 1024; //100mb
+
+
+browseBtn.addEventListener("click", () => {
+  fileInput.click();
+});
+
+// Event fired when item is dropped at targeted area
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  //   console.log("dropped", e.dataTransfer.files[0].name);
+    // Gives file taken as input
+  const files = e.dataTransfer.files;
+    //Files coming from drop event wil be transfered to fileInput
+  if (files.length === 1) {
+        // Insures if some file is dropped not only simply dragged and dropped
+    if (files[0].size < maxAllowedSize) {
+      fileInput.files = files;
+      uploadFile();  //function called
+    } else {
+      showToast("Max file size is 100MB");
+    }
+  } else if (files.length > 1) {
+    showToast("You can't upload multiple files");
+  }
+  dropZone.classList.remove("dragged");
+});
+
 
 // dragover is an event works when something is draggedover
-dropZone.addEventListener("dragover",(e)=>{
+dropZone.addEventListener("dragover", (e) => {
     // Bydefault it was downloading it so it is prevented through it
-    e.preventDefault();
-    if(!dropZone.classList.contains("dragged"))
-    {
-    dropZone.classList.add("dragged");
-    }
+  e.preventDefault();
+  dropZone.classList.add("dragged");
+
+  // console.log("dropping file");
 });
 
-dropZone.addEventListener("dragleave",()=>{
-    dropZone.classList.remove("dragged");
-});
-// Event fired when item is dropped at targeted area
-dropZone.addEventListener("drop",(e)=>{
-    e.preventDefault();
-    dropZone.classList.remove("dragged");
+dropZone.addEventListener("dragleave", (e) => {
+  dropZone.classList.remove("dragged");
 
-    // Gives file taken as input
-    const files=e.dataTransfer.files;
-    // console.log(file);
-    //Files coming from drop event wil be transfered to fileInput
-    if(files.length){
-        // Insures if some file is dropped not only simply dragged and dropped
-        fileInput.files=files;
-        uploadFile(); //function called
-    }
-
+  console.log("drag ended");
 });
 
-//uploading file using browse feature
-
-
-const fileInput=document.querySelector('#fileInput');
-const browseBtn=document.querySelector('.browseBtn');
-
-browseBtn.addEventListener("click",()=>{
-    // transfer the control of <input> to browse text after clicking browse text
-    fileInput.click();
-});
-
+// file input change and uploader
 //upload using browse 
-fileInput.addEventListener("change",()=>{
-    uploadFile();
+fileInput.addEventListener("change", () => {
+  if (fileInput.files[0].size > maxAllowedSize) {
+    showToast("Max file size is 100MB");
+    fileInput.value = ""; // reset the input
+    return;
+  }
+  uploadFile();
+});
+
+// sharing container listenrs
+copyURLBtn.addEventListener("click", () => {
+  fileURL.select();
+  document.execCommand("copy");
+  showToast("Copied to clipboard");
+});
+
+fileURL.addEventListener("click", () => {
+  fileURL.select();
 });
 
 
-// The files will be uploaded here
-const host="https://inshare.herokuapp.com/";
-const uploadURL=`${host}api/files`;
-
-const maxAllowedSize=100*1024*1024; //100mb
 //uploading files
 const uploadFile = () => {
+  console.log("file added uploading");
 
-    //allows only one file to upload 
-    if(fieldInput.files.length>1){
-        fileInput.value="";
-        showToast("Upload Only 1 file");
-        return;
+  files = fileInput.files;
+  const formData = new FormData();
+  formData.append("myfile", files[0]);
+
+  //show the uploader
+  progressContainer.style.display = "block";
+
+  // upload file
+  const xhr = new XMLHttpRequest();
+
+  // listen for upload progress
+  xhr.upload.onprogress = function (event) {
+    // find the percentage of uploaded
+    let percent = Math.round((100 * event.loaded) / event.total);
+    progressPercent.innerText = percent;
+    const scaleX = `scaleX(${percent / 100})`;
+    bgProgress.style.transform = scaleX;
+    progressBar.style.transform = scaleX;
+  };
+
+  // handle error
+  xhr.upload.onerror = function () {
+    showToast(`Error in upload: ${xhr.status}.`);
+    fileInput.value = ""; // reset the input
+  };
+
+  // listen for response which will give the link
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState == XMLHttpRequest.DONE) {
+      onFileUploadSuccess(xhr.responseText);
     }
-
-    const file = fileInput.files[0];
-    if(file.size>maxAllowedSize){
-        showToast("Max Size Allowed is 100 MB");
-        fileInput.value="";
-        return;
-
-    }
-
-    progressContainer.style.display="block";
-
-    const formData=new FormData();
-    formData.append("myfile",file);
-
-    const xhr = new XMLHttpRequest();
-
-    //
-    xhr.onreadystatechange = ()=>{
-        //checks the upload status
-        console.log(xhr.readyState);
-        if(xhr.readyState===XMLHttpRequest.DONE){
-            //gives json object with the link to the file
-            console.log(xhr.response);
-            //its a json object hence needs to be passed before calling
-            onUploadSuccess(JSON.parse(xhr.response));
-        }
-    };
-
-    //upload progress
-    xhr.upload.onprogress=updateProgress;
-    xhr.upload.onerror=()=>{
-        fileInput.value="";
-        showToast(`Error in upload : &{xhr.statusText}`)
-    }
-
+  };
 
     //the host link will be opened and then will be sent there
-    xhr.open("POST",uploadURL);
-    xhr.send(formData);
-
+  xhr.open("POST", uploadURL);
+  xhr.send(formData);
 };
 
 
-//Animating progress bar
-const bgProgress=querySelector(".bg-progress");
-const progressBar=querySelector(".progress-bar");
-const percentDiv=document.querySelector("#percent");
-const percentContainer=document.querySelector(".progress-container");
+const onFileUploadSuccess = (res) => {
+  fileInput.value = ""; // reset the input
+  status.innerText = "Uploaded";
 
-const updateProgress = (e)=>{
-    //as soon as file starts uploading
-    progressContainer.style.display="block";
-
-    // size of loaded file divided by size loaded; both of them are object of e
-    const percent=Math.round((e.loaded/e.total)*100);
-    // console.log(percent);
-    bgProgress.style.width=`${percent}%`;
-    percentDiv.innerText=percent;
-    progressBar.style.transform=`scaleX(${percent/100})`;
-};
-
-
-//adding link to the clipboard box
-const fileURLInput=document.querySelector("#fileURL");
-const sharingContainer=document.querySelector(".sharing-container");
-const onUploadSuccess = (file:url) =>{
-    fileInput.value=""
-    emailForm[2].setAttribute("disabled");
-
+  // remove the disabled attribute from form btn & make text send
+  emailForm[2].removeAttribute("disabled");
+  emailForm[2].innerText = "Send";
     //once progree bar finishes uploading it gets hidden
-    progressContainer.style.display="none";
-    sharingContainer.style.display="block";
-    fileURLInput.value=url;
+  progressContainer.style.display = "none"; // hide the box
 
-}
+  //its a json object hence needs to be passed before calling
+  const { file: url } = JSON.parse(res);
+  console.log(url);
+  sharingContainer.style.display = "block";
+  fileURL.value = url;
+};
 
+emailForm.addEventListener("submit", (e) => {
+  e.preventDefault(); // stop submission
 
-//copies the selected link into clipboard
-const copyBtn=document.querySelector("#copyBtn");
-copyBtn.addEventListener("click",()=>{
-    //after clicking the input("URL") get selected
-    fileURLInput.select();
-    document.execCommand("copy");
-    showToast("Link Copied");
-});
+  // disable the button
+  emailForm[2].setAttribute("disabled", "true");
+  emailForm[2].innerText = "Sending";
 
+  const url = fileURL.value;
 
-//Sending mail using fetch API
-//email-Api
-const emailURL=`${host}api/files/send`;
-
-const emailForm=document.querySelector("#emialForm");
-emailForm.addEventListener("submit",(e)=>{
-    e.preventDefault();
-
-    const url=fileURLInput.value;
-    const formData={
+  const formData = {
         //gives the unique id present at the end of the link generated
-        uuid: url.split("/").splice(-1,1)[0],
-        emailTo: emailForm.elements["to-email"].value,
-        emailFrom:emailForm.elements["from-email"].value
-    };
-    //removes buttton
-    emailForm[2].setAttribute("disabled","true");
-
-
-    console.table(formData);
-
-    fetch(emailURL,{
-        method:"POST",
-        headers:{
-            "Content-type":"application/json"
-        },
-        body:JSON.stringify(formData)
-    }).then(res=> res.json()).then(({success})=>{
-        sharingContainer.style.display="none";
+    uuid: url.split("/").splice(-1, 1)[0],
+    emailTo: emailForm.elements["to-email"].value,
+    emailFrom: emailForm.elements["from-email"].value,
+  };
+  console.log(formData);
+  fetch(emailURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
         showToast("Email Sent");
-    })
+        sharingContainer.style.display = "none"; // hide the box
+      }
+    });
 });
 
-
-
-const toast=document.querySelector(".toast");
 let toastTimer;
-const showToast(msg)=>{
-    toast.innerTeaxt=msg;
-    toast.style.transform="translate(-50%,0)";
-    clearTimeout(toastTimer);
-    toastTimer= setTimeout{()=>{
-      toast.style.transform="translate(-50%,60px)" 
-   },2000};
+// the toast function
+const showToast = (msg) => {
+  clearTimeout(toastTimer);
+  toast.innerText = msg;
+  toast.classList.add("show");
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2000);
 };
